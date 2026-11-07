@@ -7,6 +7,7 @@ const clean = (v) => (v || "").trim().replace(/^["']|["']$/g, "");
 const VERIFY_TOKEN = clean(process.env.VERIFY_TOKEN);
 const IG_TOKEN = clean(process.env.IG_TOKEN);
 const IG_ID = clean(process.env.IG_ID);
+const MESSAGES_ID = clean(process.env.MESSAGES_ID) || IG_ID; // backup setting
 const KEYWORD = clean(process.env.KEYWORD) || "LINK";
 const FINAL_TEXT =
   (process.env.FINAL_TEXT || "").trim() ||
@@ -14,16 +15,16 @@ const FINAL_TEXT =
 const FINAL_LINK = clean(process.env.FINAL_LINK);
 const PORT = process.env.PORT || 3000;
 
-// Facebook address, because the token starts with EAA
 const API = "https://graph.facebook.com/v21.0";
 
 console.log("CHECK IG_TOKEN length:", IG_TOKEN.length, "| starts with:", IG_TOKEN.slice(0, 4));
 console.log("CHECK IG_ID:", IG_ID);
+console.log("CHECK MESSAGES_ID:", MESSAGES_ID);
 console.log("CHECK KEYWORD:", KEYWORD);
 console.log("CHECK FINAL_LINK:", FINAL_LINK);
 
 async function send(recipient, message) {
-  const res = await fetch(`${API}/me/messages`, {
+  const res = await fetch(`${API}/${MESSAGES_ID}/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
