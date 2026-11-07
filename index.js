@@ -3,12 +3,12 @@ const app = express();
 app.use(express.json());
 
 const {
-  VERIFY_TOKEN,      // any secret word you choose
-  IG_TOKEN,          // Instagram access token
-  IG_ID,             // your Instagram account ID
-  KEYWORD = "LINK",  // word people comment
-  FINAL_TEXT = "Thanks for following! 🎉 Here is your link:", // your text
-  FINAL_LINK,        // link behind the button
+  VERIFY_TOKEN,
+  IG_TOKEN,
+  IG_ID,
+  KEYWORD = "Project",
+  FINAL_TEXT = "Thank you for follow. Here's the link",
+  FINAL_LINK,
   PORT = 3000,
 } = process.env;
 
@@ -25,10 +25,10 @@ async function send(recipient, message) {
   });
   const data = await res.json();
   if (!res.ok) console.error("Send error:", JSON.stringify(data));
+  else console.log("Message sent OK");
   return data;
 }
 
-// Text + "Open link" button
 async function sendLinkButton(userId) {
   return send(
     { id: userId },
@@ -38,9 +38,7 @@ async function sendLinkButton(userId) {
         payload: {
           template_type: "button",
           text: FINAL_TEXT,
-          buttons: [
-            { type: "web_url", url: FINAL_LINK, title: "Open link" },
-          ],
+          buttons: [{ type: "web_url", url: FINAL_LINK, title: "Open link" }],
         },
       },
     }
@@ -52,10 +50,10 @@ async function isFollowing(userId) {
     `${API}/${userId}?fields=is_user_follow_business&access_token=${IG_TOKEN}`
   );
   const data = await res.json();
+  console.log("Follow check:", JSON.stringify(data));
   return data.is_user_follow_business === true;
 }
 
-// Meta checks your server here (one time)
 app.get("/webhook", (req, res) => {
   if (
     req.query["hub.mode"] === "subscribe" &&
@@ -67,16 +65,23 @@ app.get("/webhook", (req, res) => {
 });
 
 app.post("/webhook", async (req, res) => {
-  res.sendStatus(200); // answer Meta immediately
+  res.sendStatus(200);
+  console.log("WEBHOOK RECEIVED:", JSON.stringify(req.body));
 
   try {
     for (const entry of req.body.entry || []) {
-      // 1) Someone comments the keyword
       for (const change of entry.changes || []) {
         if (change.field !== "comments") continue;
         const c = change.value;
-        if (c.from?.id === IG_ID) continue; // ignore your own comments
-        if (!c.text || !c.text.toUpperCase().includes(KEYWORD.toUpperCase())) continue;
+        console.log("Comment text:", c.text, "| keyword:", KEYWORD);
+        if (c.from?.id === IG_ID) {
+          console.log("Skipped: comment is from your own account");
+          continue;
+        }
+        if (!c.text || !c.text.toUpperCase().includes(KEYWORD.toUpperCase())) {
+          console.log("Skipped: keyword not found in comment");
+          continue;
+        }
 
         await send(
           { comment_id: c.id },
@@ -87,7 +92,6 @@ app.post("/webhook", async (req, res) => {
         );
       }
 
-      // 2) Someone replies in the DM
       for (const m of entry.messaging || []) {
         if (!m.message || m.message.is_echo) continue;
         const userId = m.sender.id;
