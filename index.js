@@ -2,17 +2,25 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
-const {
-  VERIFY_TOKEN,
-  IG_TOKEN,
-  IG_ID,
-  KEYWORD = "Project",
-  FINAL_TEXT = "Thank you for follow. Here's the link",
-  FINAL_LINK,
-  PORT = 3000,
-} = process.env;
+const clean = (v) => (v || "").trim().replace(/^["']|["']$/g, "");
+
+const VERIFY_TOKEN = clean(process.env.VERIFY_TOKEN);
+const IG_TOKEN = clean(process.env.IG_TOKEN);
+const IG_ID = clean(process.env.IG_ID);
+const KEYWORD = clean(process.env.KEYWORD) || "LINK";
+const FINAL_TEXT =
+  (process.env.FINAL_TEXT || "").trim() ||
+  "Thanks for following! 🎉 Here is your link:";
+const FINAL_LINK = clean(process.env.FINAL_LINK);
+const PORT = process.env.PORT || 3000;
 
 const API = "https://graph.instagram.com/v21.0";
+
+// Safe startup check (does not show the full token)
+console.log("CHECK IG_TOKEN length:", IG_TOKEN.length, "| starts with:", IG_TOKEN.slice(0, 4));
+console.log("CHECK IG_ID:", IG_ID);
+console.log("CHECK KEYWORD:", KEYWORD);
+console.log("CHECK FINAL_LINK:", FINAL_LINK);
 
 async function send(recipient, message) {
   const res = await fetch(`${API}/${IG_ID}/messages`, {
@@ -46,9 +54,9 @@ async function sendLinkButton(userId) {
 }
 
 async function isFollowing(userId) {
-  const res = await fetch(
-    `${API}/${userId}?fields=is_user_follow_business&access_token=${IG_TOKEN}`
-  );
+  const res = await fetch(`${API}/${userId}?fields=is_user_follow_business`, {
+    headers: { Authorization: `Bearer ${IG_TOKEN}` },
+  });
   const data = await res.json();
   console.log("Follow check:", JSON.stringify(data));
   return data.is_user_follow_business === true;
