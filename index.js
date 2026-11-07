@@ -14,16 +14,16 @@ const FINAL_TEXT =
 const FINAL_LINK = clean(process.env.FINAL_LINK);
 const PORT = process.env.PORT || 3000;
 
-const API = "https://graph.instagram.com/v21.0";
+// Facebook address, because the token starts with EAA
+const API = "https://graph.facebook.com/v21.0";
 
-// Safe startup check (does not show the full token)
 console.log("CHECK IG_TOKEN length:", IG_TOKEN.length, "| starts with:", IG_TOKEN.slice(0, 4));
 console.log("CHECK IG_ID:", IG_ID);
 console.log("CHECK KEYWORD:", KEYWORD);
 console.log("CHECK FINAL_LINK:", FINAL_LINK);
 
 async function send(recipient, message) {
-  const res = await fetch(`${API}/${IG_ID}/messages`, {
+  const res = await fetch(`${API}/me/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
