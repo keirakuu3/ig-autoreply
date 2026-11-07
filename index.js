@@ -57,7 +57,7 @@ function doneButtonMessage(text) {
       payload: {
         template_type: "button",
         text,
-        buttons: [{ type: "postback", title: "Done ✅", payload: "CHECK_FOLLOW" }],
+        buttons: [{ type: "postback", title: "Following ✅", payload: "CHECK_FOLLOW" }],
       },
     },
   };
